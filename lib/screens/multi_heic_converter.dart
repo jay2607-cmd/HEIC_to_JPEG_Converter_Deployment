@@ -4,10 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:heic_converter/screens/history_screen.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../utils/constant.dart';
+import '../utils/google_ads.dart';
 
 class MultiHEICConverter extends StatefulWidget {
   const MultiHEICConverter({super.key});
@@ -19,6 +21,44 @@ class MultiHEICConverter extends StatefulWidget {
 class _MultiHEICConverterState extends State<MultiHEICConverter> {
   String? selectedFormat;
   bool isButtonEnabled = true;
+  bool isFromHEICTOJPG = true;
+
+  bool isInterstitaleLoaded = false;
+  var adInterstitaleUnit = adIntUnit;
+
+  late InterstitialAd interstitialAd;
+
+  initInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: adInterstitaleUnit,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
+        interstitialAd = ad;
+        setState(() {
+          isInterstitaleLoaded = true;
+        });
+        interstitialAd.fullScreenContentCallback =
+            FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+
+          // do your task for close activity
+          Navigator.pop(context);
+        }, onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+        });
+      }, onAdFailedToLoad: (error) {
+        interstitialAd.dispose();
+      }),
+    );
+  }
 
   _MultiHEICConverterState() {
     selectedFormat = selectedFormatList[0];
@@ -32,6 +72,36 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
     "HEIC TO PNG",
     "HEIC TO WEBP"
   ];
+
+  var adUnit = adBannerUnit;
+  bool isLoaded = false;
+  late BannerAd bannerAd;
+
+  initBannerAd() {
+    bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        ad.dispose();
+        print(error);
+      }),
+      request: AdRequest(),
+    );
+
+    bannerAd.load();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initBannerAd();
+    initInterstitialAd();
+  }
 
   void _showConfirmationDialog(BuildContext context) {
     showDialog(
@@ -134,7 +204,16 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
     String? newSelectedFormat = selectedFormat;
 
     print(files);
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (isInterstitaleLoaded) {
+          interstitialAd.show();
+          return false; // Prevent the default back navigation
+        } else {
+          return true; // Allow the default back navigation
+        }
+      },
+      child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 85,
           automaticallyImplyLeading: false,
@@ -143,7 +222,11 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
           elevation: 0,
           leading: GestureDetector(
             onTap: () {
-              Navigator.pop(context);
+              if (isInterstitaleLoaded) {
+                interstitialAd.show();
+              } else {
+                Navigator.pop(context);
+              }
             },
             child: Transform.scale(
               scale: 1.25,
@@ -180,7 +263,7 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(9),
                                 child: Container(
-                                  width: 100,
+                                  width: 70,
                                   child: FutureBuilder<void>(
                                     future: precacheImage(
                                         FileImage(File(filePath)), context),
@@ -359,7 +442,8 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
                                   int length = files.length;
 
                                   for (int i = 0; i < length; i++) {
-                                    await convertToJPG(files[i]!.path,
+                                    await convertToJPG(
+                                        files[i]!.path,
                                         selectedFormat
                                             .toString()
                                             .toLowerCase()
@@ -385,8 +469,9 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) =>
-                                              HistoryScreen(isFromHEICTOJPG: true,)));
+                                          builder: (context) => HistoryScreen(
+                                                isFromHEICTOJPG: true,
+                                              )));
                                 }
                               : null, // Disable the button if isButtonEnabled is false,
                           child: Image.asset(
@@ -405,7 +490,22 @@ class _MultiHEICConverterState extends State<MultiHEICConverter> {
           },
           child: Image.asset("assets/images/2/add.png"),
           backgroundColor: Color(0xff10B981),
-        ));
+        ),
+        bottomNavigationBar: Container(
+          margin: EdgeInsets.all(5),
+          child: isLoaded
+              ? SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                  child: AdWidget(ad: bannerAd),
+                )
+              : SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                ),
+        ),
+      ),
+    );
   }
 
   // Padding buildFormatDropdownButtonFormField({

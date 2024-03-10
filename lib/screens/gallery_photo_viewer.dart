@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:heic_converter/screens/bookmarked_images.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_view/photo_view.dart';
@@ -9,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../database/bookmark.dart';
 import '../utils/constant.dart';
+import '../utils/google_ads.dart';
 import 'history_screen.dart';
 import 'image_details.dart';
 
@@ -40,9 +42,33 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
   late PageController pageController;
   int currentIndex = 0; // Track the currently displayed image index
 
+  // for banner ad
+  var adUnit = adBannerUnit;
+  bool isLoaded = false;
+  late BannerAd bannerAd;
+
+  initBannerAd() {
+    bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        ad.dispose();
+        print(error);
+      }),
+      request: AdRequest(),
+    );
+
+    bannerAd.load();
+  }
+
   @override
   void initState() {
     super.initState();
+    initBannerAd();
     pageController = PageController(initialPage: widget.initialIndex);
     currentIndex = widget.initialIndex; // Initialize currentIndex
   }
@@ -90,93 +116,107 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-        onWillPop: _willPopScope,
-        child: Scaffold(
-          backgroundColor: Colors.black,
-            appBar: AppBar(
-                toolbarHeight: 85,
-                automaticallyImplyLeading: false,
-                leadingWidth: 65,
-                backgroundColor: Colors.black,
-                elevation: 0,
-                leading: GestureDetector(
-                  onTap: () {
-                    _willPopScope();
-                  },
-                  child: Transform.scale(
-                    scale: 1.25,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0, left: 8.0),
-                      child: Image.asset(
-                        'assets/images/2/back.png',
-                      ),
-                    ),
+      onWillPop: _willPopScope,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+            toolbarHeight: 85,
+            automaticallyImplyLeading: false,
+            leadingWidth: 65,
+            backgroundColor: Colors.black,
+            elevation: 0,
+            leading: GestureDetector(
+              onTap: () {
+                _willPopScope();
+              },
+              child: Transform.scale(
+                scale: 1.25,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+                  child: Image.asset(
+                    'assets/images/2/back.png',
                   ),
                 ),
-                title: Text(
-                  "Gallery",
-                  style: kAppbarStyle,
-                )),
-            body: Column(children: [
-              Text(
-                widget.imageFiles[currentIndex].path.split("/").last,
-                style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),
-
               ),
-              Expanded(
-                child: PhotoViewGallery.builder(
-                  itemCount: widget.imageFiles.length,
-                  pageController: pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      currentIndex = index; // Update currentIndex when swiping
-                    });
+            ),
+            title: Text(
+              "Gallery",
+              style: kAppbarStyle,
+            )),
+        body: Column(children: [
+          Text(
+            widget.imageFiles[currentIndex].path.split("/").last,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          Expanded(
+            child: PhotoViewGallery.builder(
+              itemCount: widget.imageFiles.length,
+              pageController: pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  currentIndex = index; // Update currentIndex when swiping
+                });
+              },
+              builder: (BuildContext context, int index) {
+                return PhotoViewGalleryPageOptions(
+                  imageProvider: FileImage(widget.imageFiles[index]),
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.covered * 2,
+                  heroAttributes: PhotoViewHeroAttributes(tag: index),
+                );
+              },
+            ),
+          ),
+          Container(
+            color: Colors.black,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  iconSize: 80,
+                  onPressed: () {
+                    deleteFile(currentIndex); // Use currentIndex
                   },
-                  builder: (BuildContext context, int index) {
-                    return PhotoViewGalleryPageOptions(
-                      imageProvider: FileImage(widget.imageFiles[index]),
-                      minScale: PhotoViewComputedScale.contained,
-                      maxScale: PhotoViewComputedScale.covered * 2,
-                      heroAttributes: PhotoViewHeroAttributes(tag: index),
-                    );
+                  icon: Image.asset("assets/images/8/delete_icn.png"),
+                ),
+                IconButton(
+                  iconSize: 80,
+                  onPressed: () {
+                    shareFile(currentIndex); // Use currentIndex
                   },
+                  icon: Image.asset("assets/images/8/share_icn.png"),
                 ),
-              ),
-              Container(
-                color: Colors.black,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      iconSize: 80,
-                      onPressed: () {
-                        deleteFile(currentIndex); // Use currentIndex
-                      },
-                      icon: Image.asset("assets/images/8/delete_icn.png"),
-                    ),
-                    IconButton(
-                      iconSize: 80,
-                      onPressed: () {
-                        shareFile(currentIndex); // Use currentIndex
-                      },
-                      icon: Image.asset("assets/images/8/share_icn.png"),
-                    ),
-                    IconButton(
-                      iconSize: 80,
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ImageDetails(
-                                      file: widget.imageFiles[currentIndex],
-                                    )));
-                      },
-                      icon: Image.asset("assets/images/8/info_icn.png"),
-                    ),
-                  ],
+                IconButton(
+                  iconSize: 80,
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ImageDetails(
+                                  file: widget.imageFiles[currentIndex],
+                                )));
+                  },
+                  icon: Image.asset("assets/images/8/info_icn.png"),
                 ),
-              ),
-            ])));
+              ],
+            ),
+          ),
+        ]),
+        bottomNavigationBar: Container(
+          margin: EdgeInsets.all(5),
+          child: isLoaded
+              ? SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                  child: AdWidget(ad: bannerAd),
+                )
+              : SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                ),
+        ),
+      ),
+    );
   }
 
   Future<bool> _willPopScope() {
@@ -185,7 +225,11 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
           context, MaterialPageRoute(builder: (context) => BookmarkedImages()));
     } else {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => HistoryScreen(isFromHEICTOJPG: false,)));
+          context,
+          MaterialPageRoute(
+              builder: (context) => HistoryScreen(
+                    isFromHEICTOJPG: true,
+                  )));
     }
 
     return Future.value(true);

@@ -20,7 +20,6 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-
   List<File> imageFiles = [];
   late File file;
   List<File> heicFiles = [];
@@ -89,9 +88,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  late BannerAd bannerAd;
+  var adUnit = adBannerUnit;
+  bool isLoaded = false;
+
+  initBannerAd() {
+    bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        ad.dispose();
+        print(error);
+      }),
+      request: AdRequest(),
+    );
+
+    bannerAd.load();
+  }
+
   @override
   void initState() {
     super.initState();
+    initBannerAd();
     initInterstitialAd();
     loadImagesWithJPEGExtensions(['jpeg', 'png', 'webp']);
     loadImagesWithHEICExtensions(['heic', 'heif']);
@@ -99,7 +121,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   initInterstitialAd() {
     InterstitialAd.load(
-      adUnitId: widget.isFromHEICTOJPG ? adInterstitaleUnit : "",
+      adUnitId: widget.isFromHEICTOJPG == false ? adInterstitaleUnit : "",
       request: AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
         interstitialAd = ad;
@@ -108,28 +130,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
         interstitialAd.fullScreenContentCallback =
             FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
-              ad.dispose();
+          ad.dispose();
 
-              setState(() {
-                isInterstitaleLoaded = false;
-              });
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
 
-              // do your task for close activity
-              Navigator.pop(context);
-            }, onAdFailedToShowFullScreenContent: (ad, error) {
-              ad.dispose();
+          // do your task for close activity
+          Navigator.pop(context);
+        }, onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
 
-              setState(() {
-                isInterstitaleLoaded = false;
-              });
-            });
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+        });
       }, onAdFailedToLoad: (error) {
         interstitialAd.dispose();
       }),
     );
   }
-
-
 
   Box<Bookmark> bookmarkBox = Hive.box<Bookmark>('bookmark');
 
@@ -152,7 +172,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     sortFilesByLastModified(imageFiles, "images");
     return WillPopScope(
       onWillPop: () async {
-        if (isInterstitaleLoaded) {
+        if (isInterstitaleLoaded && widget.isFromHEICTOJPG == false) {
           interstitialAd.show();
           return false; // Prevent the default back navigation
         } else {
@@ -170,7 +190,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             elevation: 0,
             leading: GestureDetector(
               onTap: () {
-                if (isInterstitaleLoaded) {
+                if (isInterstitaleLoaded && widget.isFromHEICTOJPG == false) {
                   interstitialAd.show();
                 } else {
                   Navigator.pop(context);
@@ -257,107 +277,109 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         .any((bookmark) => bookmark.path == file.path);
 
                     return GestureDetector(
-                      onTap: () {
-                        print("$index");
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GalleryPhotoViewWrapper(
-                              imageFiles: imageFiles,
-                              initialIndex: index,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        child: Stack(
-                          children: [
-                            Align(
-                              alignment: Alignment.center,
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(9),
-                                    child: Container(
-                                      child: Image.file(file),
-                                    ),
-                                  ),
-                                ],
+                        onTap: () {
+                          print("$index");
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GalleryPhotoViewWrapper(
+                                imageFiles: imageFiles,
+                                initialIndex: index,
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: Stack(
-                                children: [
-                                  // ClipRect to only show the circular avatar over the image
-                                  Positioned(
-                                    right: -69,
-                                    top: -69,
-                                    child: Container(
-                                      padding: EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            width: 52, color: Colors.black),
-                                        color: Colors.transparent,
+                          );
+                        },
+                        child: Container(
+                          child: Stack(
+                            children: [
+                              Align(
+                                alignment: Alignment.center,
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(9),
+                                      child: Container(
+                                        child: Image.file(file),
                                       ),
                                     ),
-                                  ),
-                                  // Bookmark icon
-                                  Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    child: IconButton(
-                                      onPressed: () {
-                                        if (isBookmarked) {
-                                          bookmarkBox.deleteAt(bookmarkBox.values
-                                              .toList()
-                                              .indexWhere((bookmark) =>
-                                                  bookmark.path == file.path));
-                                        } else {
-                                          bookmarkBox
-                                              .add(Bookmark(path: file.path));
-                                        }
-                                        setState(
-                                            () {}); // Update the UI by calling setState
-                                      },
-                                      icon: isBookmarked
-                                          ? Transform.scale(
-                                              scale: 0.76,
-                                              child: Image.asset(
-                                                "assets/images/4/bookmark_h.png",
-                                              ),
-                                            )
-                                          : Transform.scale(
-                                              scale: 0.76,
-                                              child: Image.asset(
-                                                "assets/images/4/bookmark.png",
-                                              ),
-                                            ),
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Container(
-                                margin: EdgeInsets.symmetric(vertical: 5,horizontal: 5),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Text(
-                                    file.path.split('/').last,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: Stack(
+                                  children: [
+                                    // ClipRect to only show the circular avatar over the image
+                                    Positioned(
+                                      right: -69,
+                                      top: -69,
+                                      child: Container(
+                                        padding: EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              width: 52, color: Colors.black),
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                    ),
+                                    // Bookmark icon
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: IconButton(
+                                        onPressed: () {
+                                          if (isBookmarked) {
+                                            bookmarkBox.deleteAt(bookmarkBox
+                                                .values
+                                                .toList()
+                                                .indexWhere((bookmark) =>
+                                                    bookmark.path ==
+                                                    file.path));
+                                          } else {
+                                            bookmarkBox
+                                                .add(Bookmark(path: file.path));
+                                          }
+                                          setState(
+                                              () {}); // Update the UI by calling setState
+                                        },
+                                        icon: isBookmarked
+                                            ? Transform.scale(
+                                                scale: 0.76,
+                                                child: Image.asset(
+                                                  "assets/images/4/bookmark_h.png",
+                                                ),
+                                              )
+                                            : Transform.scale(
+                                                scale: 0.76,
+                                                child: Image.asset(
+                                                  "assets/images/4/bookmark.png",
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  margin: EdgeInsets.symmetric(
+                                      vertical: 5, horizontal: 5),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Text(
+                                      file.path.split('/').last,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                      ),
-                    ));
+                            ],
+                          ),
+                        ));
                   },
                 ),
                 GridView.builder(
@@ -427,7 +449,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     child: IconButton(
                                       onPressed: () {
                                         if (isBookmarked) {
-                                          bookmarkBox.deleteAt(bookmarkBox.values
+                                          bookmarkBox.deleteAt(bookmarkBox
+                                              .values
                                               .toList()
                                               .indexWhere((bookmark) =>
                                                   bookmark.path == file.path));
@@ -520,6 +543,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
 //               ),
               ],
             ),
+          ),
+          bottomNavigationBar: Container(
+            margin: EdgeInsets.all(5),
+            child: isLoaded
+                ? SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                    child: AdWidget(ad: bannerAd),
+                  )
+                : SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                  ),
           ),
         ),
       ),

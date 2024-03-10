@@ -4,9 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../utils/constant.dart';
+import '../utils/google_ads.dart';
 import 'history_screen.dart';
 
 class ReverseConverter extends StatefulWidget {
@@ -19,6 +21,34 @@ class ReverseConverter extends StatefulWidget {
 class _ReverseConverterState extends State<ReverseConverter> {
   String filePath = "";
   String convertedFilePath = "";
+
+  late BannerAd bannerAd;
+  bool isLoaded = false;
+  var adUnit = adBannerUnit;
+
+  initBannerAd() {
+    bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        ad.dispose();
+        print(error);
+      }),
+      request: AdRequest(),
+    );
+
+    bannerAd.load();
+  }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initBannerAd();
+  }
 
   void getImage() async {
     FilePickerResult? resultFile = await FilePicker.platform.pickFiles(
@@ -181,7 +211,9 @@ class _ReverseConverterState extends State<ReverseConverter> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => HistoryScreen(isFromHEICTOJPG: true,)));
+                                  builder: (context) => HistoryScreen(
+                                        isFromHEICTOJPG: true,
+                                      )));
                         },
                         child: Image.asset(
                           "assets/images/3/view_all.png",
@@ -200,6 +232,19 @@ class _ReverseConverterState extends State<ReverseConverter> {
           },
           child: Image.asset("assets/images/2/add.png"),
           backgroundColor: Color(0xff10B981),
+        ),
+        bottomNavigationBar: Container(
+          margin: EdgeInsets.all(5),
+          child: isLoaded
+              ? SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                  child: AdWidget(ad: bannerAd),
+                )
+              : SizedBox(
+                  height: bannerAd.size.height.toDouble(),
+                  width: bannerAd.size.width.toDouble(),
+                ),
         ),
       ),
     );

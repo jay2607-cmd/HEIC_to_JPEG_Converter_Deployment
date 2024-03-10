@@ -141,6 +141,29 @@ class _HeicToJpgState extends State<HeicToJpg> {
     }
   }
 
+  // for banner ad
+  late BannerAd bannerAd;
+  var adUnit = adBannerUnit;
+  bool isLoaded = false;
+
+  initBannerAd() {
+    bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        ad.dispose();
+        print(error);
+      }),
+      request: AdRequest(),
+    );
+
+    bannerAd.load();
+  }
+
   late InterstitialAd interstitialAd;
   bool isInterstitaleLoaded = false;
 
@@ -158,21 +181,21 @@ class _HeicToJpgState extends State<HeicToJpg> {
         });
         interstitialAd.fullScreenContentCallback =
             FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
-              ad.dispose();
+          ad.dispose();
 
-              setState(() {
-                isInterstitaleLoaded = false;
-              });
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
 
-              // do your task for close activity
-              Navigator.pop(context);
-            }, onAdFailedToShowFullScreenContent: (ad, error) {
-              ad.dispose();
+          // do your task for close activity
+          Navigator.pop(context);
+        }, onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
 
-              setState(() {
-                isInterstitaleLoaded = false;
-              });
-            });
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+        });
       }, onAdFailedToLoad: (error) {
         interstitialAd.dispose();
       }),
@@ -183,14 +206,13 @@ class _HeicToJpgState extends State<HeicToJpg> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    initBannerAd();
     initInterstitialAd();
   }
 
   @override
   Widget build(BuildContext context) {
     String? newSelectedFormat = selectedFormat;
-
-
 
     return WillPopScope(
       onWillPop: () async {
@@ -271,7 +293,8 @@ class _HeicToJpgState extends State<HeicToJpg> {
                                           0xff06B4D0), // Set the dropdown background color
                                     ),
                                     child: buildFormatDropdownButtonFormField(
-                                      selectedValue: newSelectedFormat.toString(),
+                                      selectedValue:
+                                          newSelectedFormat.toString(),
                                       onValueChanged: (val) {
                                         setState(() {
                                           newSelectedFormat = val;
@@ -283,7 +306,8 @@ class _HeicToJpgState extends State<HeicToJpg> {
                                   ),
                                   SizedBox(height: 16),
                                   Container(
-                                    margin: EdgeInsets.only(left: 26, right: 28),
+                                    margin:
+                                        EdgeInsets.only(left: 26, right: 28),
                                     child: Row(
                                       children: [
                                         Expanded(
@@ -303,8 +327,9 @@ class _HeicToJpgState extends State<HeicToJpg> {
                                               ),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black.withOpacity(
-                                                      0.2), // Shadow color
+                                                  color: Colors.black
+                                                      .withOpacity(
+                                                          0.2), // Shadow color
                                                   spreadRadius:
                                                       1, // Spread radius
                                                   blurRadius: 5, // Blur radius
@@ -355,8 +380,9 @@ class _HeicToJpgState extends State<HeicToJpg> {
                                               ),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black.withOpacity(
-                                                      0.2), // Shadow color
+                                                  color: Colors.black
+                                                      .withOpacity(
+                                                          0.2), // Shadow color
                                                   spreadRadius:
                                                       1, // Spread radius
                                                   blurRadius: 5, // Blur radius
@@ -399,7 +425,8 @@ class _HeicToJpgState extends State<HeicToJpg> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(SnackBar(
                                           content: Text("Converting..."),
-                                          duration: Duration(milliseconds: 1000),
+                                          duration:
+                                              Duration(milliseconds: 1000),
                                           backgroundColor: Colors.blue,
                                         ));
                                       },
@@ -420,7 +447,8 @@ class _HeicToJpgState extends State<HeicToJpg> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 25.0),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(9),
                               child: Container(
@@ -429,13 +457,17 @@ class _HeicToJpgState extends State<HeicToJpg> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 10,),
+                          SizedBox(
+                            height: 10,
+                          ),
                           GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => HistoryScreen(isFromHEICTOJPG: isFromHEICTOJPG,)));
+                                        builder: (context) => HistoryScreen(
+                                              isFromHEICTOJPG: isFromHEICTOJPG,
+                                            )));
                               },
                               child: Image.asset(
                                 "assets/images/3/view_all.png",
@@ -455,6 +487,19 @@ class _HeicToJpgState extends State<HeicToJpg> {
             },
             child: Image.asset("assets/images/2/add.png"),
             backgroundColor: Color(0xff10B981),
+          ),
+          bottomNavigationBar: Container(
+            margin: EdgeInsets.all(5),
+            child: isLoaded
+                ? SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                    child: AdWidget(ad: bannerAd),
+                  )
+                : SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                  ),
           ),
         ),
       ),
