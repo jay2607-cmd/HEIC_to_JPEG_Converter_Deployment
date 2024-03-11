@@ -1,16 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:heic_converter/screens/bookmarked_images.dart';
 import 'package:heic_converter/screens/heic_to_jpg.dart';
 import 'package:heic_converter/screens/history_screen.dart';
 import 'package:heic_converter/screens/multi_heic_converter.dart';
 import 'package:heic_converter/screens/reverse_converter.dart';
+import 'package:heic_converter/utils/google_ads.dart';
 
 import 'info.dart';
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  NativeAd? nativeAd;
+  bool isNativeAdLoaded = false;
+
+  NativeAd? nativePopUpAd;
+  bool isNativePopUpAdLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    loadNativeAd();
+    loadNativePopUpAd();
+  }
+
+
+
+  void loadNativePopUpAd() {
+    nativePopUpAd = NativeAd(
+      adUnitId: adNativeUnit,
+      factoryId: "listTileMedium",
+      listener: NativeAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isNativePopUpAdLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        nativePopUpAd!.dispose();
+      }),
+      request: const AdRequest(),
+    );
+    nativePopUpAd!.load();
+  }
+
+  void loadNativeAd() {
+    nativeAd = NativeAd(
+      adUnitId: adNativeUnit,
+      factoryId: "listTileMedium",
+      listener: NativeAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isNativeAdLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        nativeAd!.dispose();
+      }),
+      request: const AdRequest(),
+    );
+    nativeAd!.load();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +203,9 @@ class MyHomePage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => HistoryScreen(isFromHEICTOJPG: false,)),
+                                  builder: (context) => HistoryScreen(
+                                        isFromHEICTOJPG: false,
+                                      )),
                             );
                           },
                           child: Image.asset(
@@ -163,7 +222,20 @@ class MyHomePage extends StatelessWidget {
             ),
           ],
         ),
+        bottomNavigationBar: isNativeAdLoaded
+            ? Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                ),
+                height: 265,
+                child: AdWidget(
+                  ad: nativeAd!,
+                ),
+              )
+            : SizedBox(),
       ),
     );
   }
 }
+
+

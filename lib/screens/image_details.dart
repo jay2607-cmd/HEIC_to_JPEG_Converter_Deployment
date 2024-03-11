@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:path/path.dart' as path;
 
 import '../utils/constant.dart';
+import '../utils/google_ads.dart';
 
 class ImageDetails extends StatefulWidget {
   final File file;
@@ -14,6 +16,52 @@ class ImageDetails extends StatefulWidget {
 }
 
 class _ImageDetailsState extends State<ImageDetails> {
+  NativeAd? nativeAd;
+  bool isNativeAdLoaded = false;
+
+  NativeAd? nativePopUpAd;
+  bool isNativePopUpAdLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    loadNativeAd();
+    loadNativePopUpAd();
+  }
+
+  void loadNativePopUpAd() {
+    nativePopUpAd = NativeAd(
+      adUnitId: adNativeUnit,
+      factoryId: "listTileMedium",
+      listener: NativeAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isNativePopUpAdLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        nativePopUpAd!.dispose();
+      }),
+      request: const AdRequest(),
+    );
+    nativePopUpAd!.load();
+  }
+
+  void loadNativeAd() {
+    nativeAd = NativeAd(
+      adUnitId: adNativeUnit,
+      factoryId: "listTileMedium",
+      listener: NativeAdListener(onAdLoaded: (ad) {
+        setState(() {
+          isNativeAdLoaded = true;
+        });
+      }, onAdFailedToLoad: (ad, error) {
+        nativeAd!.dispose();
+      }),
+      request: const AdRequest(),
+    );
+    nativeAd!.load();
+  }
+
   @override
   Widget build(BuildContext context) {
     // get file size
@@ -121,6 +169,17 @@ class _ImageDetailsState extends State<ImageDetails> {
             ),
           ),
         ),
+        bottomNavigationBar: isNativeAdLoaded
+            ? Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                ),
+                height: 265,
+                child: AdWidget(
+                  ad: nativeAd!,
+                ),
+              )
+            : SizedBox(),
       ),
     );
   }

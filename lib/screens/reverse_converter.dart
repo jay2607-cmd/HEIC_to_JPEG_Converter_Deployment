@@ -43,11 +43,50 @@ class _ReverseConverterState extends State<ReverseConverter> {
 
     bannerAd.load();
   }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     initBannerAd();
+    initInterstitialAd();
+  }
+
+  bool isInterstitaleLoaded = false;
+  var adInterstitaleUnit = adIntUnit;
+
+  late InterstitialAd interstitialAd;
+
+  initInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: adInterstitaleUnit,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
+        interstitialAd = ad;
+        setState(() {
+          isInterstitaleLoaded = true;
+        });
+        interstitialAd.fullScreenContentCallback =
+            FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+
+          // do your task for close activity
+          Navigator.pop(context);
+        }, onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+
+          setState(() {
+            isInterstitaleLoaded = false;
+          });
+        });
+      }, onAdFailedToLoad: (error) {
+        interstitialAd.dispose();
+      }),
+    );
   }
 
   void getImage() async {
@@ -140,111 +179,125 @@ class _ReverseConverterState extends State<ReverseConverter> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 85,
-          automaticallyImplyLeading: false,
-          leadingWidth: 65,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Transform.scale(
-              scale: 1.25,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8.0, left: 8.0),
-                child: Image.asset(
-                  'assets/images/2/back.png',
+    return WillPopScope(
+      onWillPop: () async {
+        if (isInterstitaleLoaded) {
+          interstitialAd.show();
+          return false; // Prevent the default back navigation
+        } else {
+          return true; // Allow the default back navigation
+        }
+      },
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 85,
+            automaticallyImplyLeading: false,
+            leadingWidth: 65,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: GestureDetector(
+              onTap: () {
+                if (isInterstitaleLoaded) {
+                  interstitialAd.show();
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: Transform.scale(
+                scale: 1.25,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+                  child: Image.asset(
+                    'assets/images/2/back.png',
+                  ),
                 ),
               ),
             ),
+            title: Text(
+              "Reverse Converter",
+              style: kAppbarStyle,
+            ),
           ),
-          title: Text(
-            "Reverse Converter",
-            style: kAppbarStyle,
+          body: Column(
+            children: [
+              filePath.isNotEmpty && convertedFilePath.isEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(9),
+                          child: Container(
+                              width: 325, child: Image.file(File(filePath))),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Center(child: Text(filePath.split("/").last)),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            convertToHEIC();
+                          },
+                          child: Image.asset(
+                            "assets/images/2/convert_image_btn.png",
+                            height: 90,
+                          ),
+                        ),
+                      ],
+                    )
+                  : SizedBox.shrink(),
+              convertedFilePath != ""
+                  ? Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(9),
+                          child: Container(
+                              width: 325,
+                              child: Image.file(File(convertedFilePath))),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HistoryScreen(
+                                          isFromHEICTOJPG: true,
+                                        )));
+                          },
+                          child: Image.asset(
+                            "assets/images/3/view_all.png",
+                            height: 90,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Center(child: Text("No Converted Images")),
+              Center(child: Text(convertedFilePath.split("/").last)),
+            ],
           ),
-        ),
-        body: Column(
-          children: [
-            filePath.isNotEmpty && convertedFilePath.isEmpty
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(9),
-                        child: Container(
-                            width: 325, child: Image.file(File(filePath))),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Center(child: Text(filePath.split("/").last)),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          convertToHEIC();
-                        },
-                        child: Image.asset(
-                          "assets/images/2/convert_image_btn.png",
-                          height: 90,
-                        ),
-                      ),
-                    ],
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              _showConfirmationDialog(context);
+            },
+            child: Image.asset("assets/images/2/add.png"),
+            backgroundColor: Color(0xff10B981),
+          ),
+          bottomNavigationBar: Container(
+            margin: EdgeInsets.all(5),
+            child: isLoaded
+                ? SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                    child: AdWidget(ad: bannerAd),
                   )
-                : SizedBox.shrink(),
-            convertedFilePath != ""
-                ? Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(9),
-                        child: Container(
-                            width: 325,
-                            child: Image.file(File(convertedFilePath))),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HistoryScreen(
-                                        isFromHEICTOJPG: true,
-                                      )));
-                        },
-                        child: Image.asset(
-                          "assets/images/3/view_all.png",
-                          height: 90,
-                        ),
-                      ),
-                    ],
-                  )
-                : Center(child: Text("No Converted Images")),
-            Center(child: Text(convertedFilePath.split("/").last)),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            _showConfirmationDialog(context);
-          },
-          child: Image.asset("assets/images/2/add.png"),
-          backgroundColor: Color(0xff10B981),
-        ),
-        bottomNavigationBar: Container(
-          margin: EdgeInsets.all(5),
-          child: isLoaded
-              ? SizedBox(
-                  height: bannerAd.size.height.toDouble(),
-                  width: bannerAd.size.width.toDouble(),
-                  child: AdWidget(ad: bannerAd),
-                )
-              : SizedBox(
-                  height: bannerAd.size.height.toDouble(),
-                  width: bannerAd.size.width.toDouble(),
-                ),
+                : SizedBox(
+                    height: bannerAd.size.height.toDouble(),
+                    width: bannerAd.size.width.toDouble(),
+                  ),
+          ),
         ),
       ),
     );
