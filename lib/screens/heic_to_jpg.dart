@@ -238,7 +238,6 @@ class _HeicToJpgState extends State<HeicToJpg> {
                 } else {
                   Navigator.pop(context);
                 }
-                Navigator.pop(context);
               },
               child: Transform.scale(
                 scale: 1.25,

@@ -94,16 +94,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HeicToJpgProvider()),
-      ],
-      child: MaterialApp(
-        theme: ThemeData.dark(),
-        debugShowCheckedModeBanner: false,
-        title: 'HEIF Converter',
-        home: const Splash(),
-      ),
+    return MaterialApp(
+      theme: ThemeData.dark(),
+      debugShowCheckedModeBanner: false,
+      title: 'HEIF Converter',
+      home: const Splash(),
     );
   }
 }

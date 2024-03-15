@@ -72,14 +72,14 @@ class _InfoState extends State<Info> {
             GestureDetector(
               onTap: () {
                 Share.share(
-                    "https://play.google.com/store/apps/details?id=com.expressway.noisedetector.sm&pli=1");
+                    "https://play.google.com/store/apps/details?id=com.example.heic_converter.sm&pli=1");
               },
               child: ListTile(
                 title: Text("Share App"),
                 trailing: IconButton(
                   onPressed: () {
                     Share.share(
-                        "https://play.google.com/store/apps/details?id=com.expressway.noisedetector.sm&pli=1");
+                        "https://play.google.com/store/apps/details?id=com.example.heic_converter.sm&pli=1");
                   },
                   icon: Icon(Icons.arrow_forward_ios_sharp),
                 ),

@@ -212,19 +212,46 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 12.0, top: 12),
-                child: IconButton(
-                    onPressed: () {
-                      deleteAllFilesInFolder(
-                          "/data/user/0/com.example.heic_converter/cache/");
-                      deleteAllFilesInFolder(
-                          "/data/user/0/com.example.heic_converter/cache/file_picker/");
-                    },
-                    icon: Transform.scale(
-                        scale: 2.2,
-                        child: Image.asset(
-                          "assets/images/4/delete.png",
-                        ))),
+                padding: const EdgeInsets.only(
+                    top: 16.0, bottom: 8, left: 8, right: 8),
+                child: Transform.scale(
+                  scale: 2.2,
+                  child: IconButton(
+                      iconSize: 33,
+                      icon: Image.asset(
+                        "assets/images/4/delete.png",
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Warning!',
+                                  style: TextStyle(color: Colors.red)),
+                              content: const Text(
+                                  'Do you really want to delete all images!'),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel'),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('OK'),
+                                  onPressed: () {
+                                    deleteAllFilesInFolder(
+                                        "/data/user/0/com.example.heic_converter/cache/");
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        setState(() {});
+                      }),
+                ),
               )
             ],
             bottom: PreferredSize(
