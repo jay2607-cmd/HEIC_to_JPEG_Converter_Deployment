@@ -110,6 +110,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     bannerAd.load();
   }
 
+
   @override
   void initState() {
     super.initState();
