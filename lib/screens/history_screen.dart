@@ -24,6 +24,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   late File file;
   List<File> heicFiles = [];
 
+  Box<Bookmark> bookmarkBox = Hive.box<Bookmark>("bookmark");
+
+  late int globalIndex;
+
   Future<void> loadImagesWithJPEGExtensions(
     List<String> extensions,
   ) async {
@@ -110,7 +114,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     bannerAd.load();
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -151,8 +154,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }),
     );
   }
-
-  Box<Bookmark> bookmarkBox = Hive.box<Bookmark>('bookmark');
+  // List<Bookmark> bookmarkedImages = bookmarkBox.values.toList();
+  //
+  // Box<Bookmark> bookmarkBox = Hive.box<Bookmark>('bookmark');
 
   void sortFilesByLastModified(List<File> files, String document) {
     files.sort((a, b) {
@@ -171,6 +175,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     sortFilesByLastModified(imageFiles, "images");
+    List<Bookmark> bookmarkedImages = bookmarkBox.values.toList();
+
     return WillPopScope(
       onWillPop: () async {
         if (isInterstitaleLoaded && widget.isFromHEICTOJPG == false) {
@@ -222,7 +228,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       icon: Image.asset(
                         "assets/images/4/delete.png",
                       ),
-                      onPressed: () {
+                      /*onPressed: () {
+
+                        Box<Bookmark> bookmarkBox = Hive.box<Bookmark>("bookmark");
+
+                        // String filePath = bookmarkedImages[index].path;
+                        //
+                        // bool isBookmarked = bookmarkBox.values
+                        //     .any((bookmark) => bookmark.path == filePath);
+
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -241,7 +255,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 TextButton(
                                   child: Text('OK'),
                                   onPressed: () {
+                                    // if (isBookmarked) {
+                                    //   bookmarkBox.deleteAt(bookmarkBox.values
+                                    //       .toList()
+                                    //       .indexWhere((bookmark) =>
+                                    //           bookmark.path == filePath));
+                                    // }
                                     deleteAllFilesInFolder(
+                                        "/data/user/0/com.example.heic_converter/cache/");
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        setState(() {});
+                      }*/
+
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Warning!',
+                                  style: TextStyle(color: Colors.red)),
+                              content: const Text(
+                                  'Do you really want to delete all images!'),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel'),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('OK'),
+                                  onPressed: () async {
+                                    // Delete all bookmarked images
+                                    for (int i = 0;
+                                        i < bookmarkedImages.length;
+                                        i++) {
+                                      bookmarkBox.deleteAt(i);
+                                    }
+
+                                    // Call the function to delete all files
+                                    await deleteAllFilesInFolder(
                                         "/data/user/0/com.example.heic_converter/cache/");
                                     Navigator.pop(context);
                                   },
@@ -301,12 +360,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   itemCount: imageFiles.length,
                   itemBuilder: (BuildContext context, int index) {
                     File file = imageFiles[index];
+
                     bool isBookmarked = bookmarkBox.values
                         .any((bookmark) => bookmark.path == file.path);
 
                     return GestureDetector(
                         onTap: () {
                           print("$index");
+
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
