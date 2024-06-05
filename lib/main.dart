@@ -33,6 +33,7 @@ Future<void> main() async {
 
   await Hive.openBox<Bookmark>("bookmark");
 
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitDown,
     DeviceOrientation.portraitUp,
