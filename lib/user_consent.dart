@@ -32,7 +32,7 @@ class UserConsent extends StatelessWidget {
             ),
             ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  primary: Color(0xff724BE5), // Set background color
+                  backgroundColor: Color(0xff724BE5), // Set background color
                   padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius:

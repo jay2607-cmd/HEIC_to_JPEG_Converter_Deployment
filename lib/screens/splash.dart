@@ -143,7 +143,7 @@ class _SplashState extends State<Splash> {
                       print(preferences.getBool("isPersonalised"));
                     },
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xff724BE5), // Set background color
+                      backgroundColor: Color(0xff724BE5), // Set background color
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius:
@@ -158,7 +158,7 @@ class _SplashState extends State<Splash> {
                   ElevatedButton(
                     onPressed: () => SystemNavigator.pop(),
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xff724BE5),
+                      backgroundColor: Color(0xff724BE5),
                       padding: EdgeInsets.symmetric(
                           vertical: 16), // Add vertical padding
                       shape: RoundedRectangleBorder(
