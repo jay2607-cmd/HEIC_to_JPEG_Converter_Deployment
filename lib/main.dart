@@ -33,7 +33,6 @@ Future<void> main() async {
 
   await Hive.openBox<Bookmark>("bookmark");
 
-
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitDown,
     DeviceOrientation.portraitUp,
@@ -112,7 +111,7 @@ class AppOpenAdManager {
   static bool isLoaded = false;
 
   var adOpenUnit =
-  isShowOpenAds ? "ca-app-pub-3940256099942544/9257395921" : "";
+  isShowOpenAds ? "ca-app-pub-2578898290136631/5950088147" : "";
 
   /// Load an AppOpenAd.
   void loadAd() {

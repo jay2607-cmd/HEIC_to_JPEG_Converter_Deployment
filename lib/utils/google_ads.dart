@@ -1,7 +1,7 @@
-var adBannerUnit = "ca-app-pub-3940256099942544/6300978111";
+var adBannerUnit = "ca-app-pub-2578898290136631/7591554445";
 
-var adIntUnit = "ca-app-pub-3940256099942544/1033173712";
+var adIntUnit = "ca-app-pub-2578898290136631/8290392599";
 
-var adNativeUnit = "ca-app-pub-3940256099942544/2247696110";
+var adNativeUnit = "ca-app-pub-2578898290136631/5664229254";
 
 

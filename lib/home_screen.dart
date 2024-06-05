@@ -104,9 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         children: [
                           IconButton(
-                            iconSize: 40,
                             onPressed: () {},
-                            icon: Image.asset("assets/images/1/ad.png"),
+                            icon: Image.asset("assets/images/1/ad.png",height:50,width: 50,),
                           ),
                           Expanded(
                             child: IconButton(
@@ -116,14 +115,14 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                           IconButton(
-                            iconSize: 40,
+                            iconSize: 10,
                             onPressed: () {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => Info()));
                             },
-                            icon: Image.asset("assets/images/1/info.png"),
+                            icon: Image.asset("assets/images/1/info.png",height: 50,width: 50,),
                           ),
                         ],
                       ),

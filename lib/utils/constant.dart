@@ -20,4 +20,4 @@ const kSuffixStyle = TextStyle(
 );
 
 const kPrivacyPolicy =
-    "http://ec2-18-116-59-188.us-east-2.compute.amazonaws.com/RonrajTech/RonrajTechPrivacyPolicy.html";
+    "https://sachaparakenil.github.io/privacy-policy/";
