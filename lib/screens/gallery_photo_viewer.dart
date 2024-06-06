@@ -105,12 +105,12 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
   }
 
   Future<void> shareFile(int index) async {
-    try {
-      await Share.shareFiles([widget.imageFiles[index].path],
-          text: widget.imageFiles[index].path.split("/").last);
-    } catch (e) {
-      print('Error while sharing file: $e');
-    }
+    // try {
+    //   await Share.share([widget.imageFiles[index].path],
+    //       text: widget.imageFiles[index].path.split("/").last);
+    // } catch (e) {
+    //   print('Error while sharing file: $e');
+    // }
   }
 
   @override
